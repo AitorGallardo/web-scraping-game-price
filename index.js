@@ -9,23 +9,32 @@ const url = 'https://www.g2a.com/search?query=sekiro&sort=price-lowest-first';
 async function startScraping(url) {
 
   try {
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] }); // args needed to run properly on heroku
-    const page = await browser.newPage();
-    const mozzilla_windows_userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0';
-    await page.setUserAgent(mozzilla_windows_userAgent);
-    await page.goto(url);
 
-    const cookieBannerMaybeLater_buttonClass = 'button.button.button--size-large.button--type-transparent';
-    const cookieBannerMaybeLater_button = await page.$(cookieBannerMaybeLater_buttonClass);
-    if (cookieBannerMaybeLater_button) {
-      await cookieBannerMaybeLater_button.click();
+    async function launchAndGoToPage(){
+      const browser = await puppeteer.launch({ args: ['--no-sandbox'] }); // args needed to run properly on heroku
+      const page = await browser.newPage();
+      const mozzilla_windows_userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0';
+      await page.setUserAgent(mozzilla_windows_userAgent);
+      await page.goto(url);
+      return {browser, page};
     }
 
-    const interested_articles = ['EUROPE', 'GLOBAL'];
-    const card_body_nestedClass = 'ul.products-grid div.Card__body';
-    const all_card_elements = await page.$$(card_body_nestedClass);
+    async function passCookieBanner(page){
+      const cookieBannerMaybeLater_buttonClass = 'button.button.button--size-large.button--type-transparent';
+      const cookieBannerMaybeLater_button = await page.$(cookieBannerMaybeLater_buttonClass);
+      if (cookieBannerMaybeLater_button) {
+        await cookieBannerMaybeLater_button.click();
+      }
+    }
 
-    const getElementText = async (el, element_class) => {
+    const getAllGameCardElements = async () => {
+        
+      const card_body_nestedClass = 'ul.products-grid div.Card__body';
+      const all_card_elements = await page.$$(card_body_nestedClass);
+      return all_card_elements;
+    }
+
+    const getTextFromDomElement = async (el, element_class) => {
       const element = await el.$(element_class);
       const elementTitle = await element.getProperty('textContent');
       const elementTitleTxt = await elementTitle.jsonValue();
@@ -33,11 +42,13 @@ async function startScraping(url) {
     }
 
     const getCheapestGame = async (all_card_elements) => {
+
+      const interested_game_regions = ['EUROPE', 'GLOBAL'];
       const gameTitleElementClass = 'h3.Card__title a';
 
       for (let card of all_card_elements) {
-        const gameTitleTxt = await getElementText(card, gameTitleElementClass);
-        if (interested_articles.some(e => gameTitleTxt.includes(e))) {
+        const gameTitleTxt = await getTextFromDomElement(card, gameTitleElementClass);
+        if (interested_game_regions.some(e => gameTitleTxt.includes(e))) {
           return card;
         }
       }
@@ -45,12 +56,12 @@ async function startScraping(url) {
 
     const getGamePrice = async (e) => {
       const elementClass = 'span.Card__price-cost.price';
-      const price = await getElementText(e, elementClass);
+      const price = await getTextFromDomElement(e, elementClass);
       const integerPrice = parseInt(price.split(" ")[0])
       return integerPrice;
     }
 
-    const sendEmail = async () => {
+    const sendEmail = async (title='', message='') => {
       try {
         let transporter = nodemailer.createTransport({
           service: process.env.MAIL_SERVICE,
@@ -63,8 +74,8 @@ async function startScraping(url) {
         var mailOptions = {
           from: process.env.MAIL_USER,
           to: process.env.MAIL_TO,
-          subject: 'SEKIRO ESTA POR DEBAJO DE LOS 40 PAVOS',
-          text: 'DALEDALEDALE'
+          subject: title.length > 0 ? title : 'SEKIRO ESTA POR DEBAJO DE LOS 40 PAVOS',
+          text: message.length > 0 ? message : 'DALEDALEDALE'
         };
 
         await transporter.sendMail(mailOptions, function (error, info) {
@@ -79,7 +90,9 @@ async function startScraping(url) {
       }
     }
 
-
+    const {browser,page} = await launchAndGoToPage();
+    await passCookieBanner(page);
+    const all_card_elements = await getAllGameCardElements(page);
     const selectedGame = await getCheapestGame(all_card_elements);
     const gamePrice = await getGamePrice(selectedGame);
 
@@ -90,10 +103,11 @@ async function startScraping(url) {
     }else {
       console.log(`Current Price ${gamePrice}€`);
     }
-    browser.close();
+    await browser.close();
 
   } catch (err) {
     console.log('ERROR >>> ', err);
+    sendEmail('SCRIPT ERROR',err);
   }
 }
 
