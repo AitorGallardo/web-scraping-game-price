@@ -8,23 +8,23 @@ const url = 'https://www.g2a.com/search?query=sekiro&sort=price-lowest-first';
 
 async function sendEmail (title = '', message = '') {
 
-  title = title.length > 0 ? title : 'SEKIRO ESTA POR DEBAJO DE LOS 40 PAVOS';
-  message.length > 0 ? message : 'DALEDALEDALE';
+  title = title.length > 0 ? title : 'SEKIRO UNDER << 30 € >>';
+  message = message.length > 0 ? message : '>>>>>>>>>>>>>>>';
 
   try {
     let transporter = nodemailer.createTransport({
       service: process.env.MAIL_SERVICE,
       auth: {
-        user: process.env.MAIL_USER, // generated ethereal user
-        pass: process.env.MAIL_PASSWORD, // generated ethereal password
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASSWORD,
       },
     });
 
     var mailOptions = {
       from: process.env.MAIL_USER,
       to: process.env.MAIL_TO,
-      subject: title.length > 0 ? title : 'SEKIRO ESTA POR DEBAJO DE LOS 40 PAVOS',
-      text: message.length > 0 ? message : 'DALEDALEDALE'
+      subject: title,
+      html:message
     };
 
     await transporter.sendMail(mailOptions, function (error, info) {
@@ -53,7 +53,6 @@ async function startScraping(url) {
           const mozzilla_windows_userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:82.0) Gecko/20100101 Firefox/82.0';
           await page.setUserAgent(mozzilla_windows_userAgent);
           await page.goto(url);
-          console.log(tries);
           return {browser, page};
 
         } catch (err) {
@@ -75,8 +74,8 @@ async function startScraping(url) {
 
     const getAllGameCardElements = async () => {
 
-      const card_body_nestedClass = 'ul.products-grid div.Card__body';
-      const all_card_elements = await page.$$(card_body_nestedClass);
+      const card_base_nestedClass = 'ul.products-grid div.Card__base';
+      const all_card_elements = await page.$$(card_base_nestedClass);
       return all_card_elements;
     }
 
@@ -107,19 +106,28 @@ async function startScraping(url) {
       return integerPrice;
     }
 
+    const getGameLink = async (e) => {
+      const element_class = 'div.Card__media a';
+      const element = await e.$(element_class);
+      const elementHref = await element.getProperty('href');
+      const elementHrefText = await elementHref.jsonValue()  
+      return elementHrefText
+    } 
+
     const { browser, page } = await launchAndGoToPage();
     await passCookieBanner(page);
     const all_card_elements = await getAllGameCardElements(page);
     const selectedGame = await getCheapestGame(all_card_elements);
     const gamePrice = await getGamePrice(selectedGame);
+    const gameLink = await getGameLink(selectedGame)
     await browser.close();
 
     const maxPrice = 30;
+    const message = `<p style="font-size:48px; font-weight: bold"> Price: ${gamePrice} € </p> </br>   ${gameLink}`
 
-    if (gamePrice < maxPrice) {
-      await sendEmail()
+    if (gamePrice <= maxPrice) {
+      await sendEmail('SEKIRO HITTED DESIRED RANGE PRICE', message)
     } else {
-      const message = `Current Price ${gamePrice}€`
       console.log(message);
       await sendEmail('GAME SCRIPT UP', message);
     }
