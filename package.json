@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dynamic": "node drp-scraping.js",
+    "static": "node frp-scraping.js"
   },
   "keywords": [],
   "author": "",

@@ -45,7 +45,7 @@ async function startScraping(url) {
 
     async function launchAndGoToPage() {
       const maxTries = 5;
-      // some times we get 'ERR_NETWORK_CHANGED' on heroku, thats why we do more attempts in order to dont wait till the script runs again
+      // some times we get 'ERR_NETWORK_CHANGED' on heroku, thats why more attempts has to be done in order to dont wait till the script runs again
       for (let tries = 0; tries < maxTries; tries++) 
         try {
           var browser = await puppeteer.launch({ args: ['--no-sandbox'] }); // args needed to run properly on heroku
