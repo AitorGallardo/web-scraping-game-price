@@ -1,1 +1,1 @@
-Script to scrape game prices.
+Script to scrape game prices
