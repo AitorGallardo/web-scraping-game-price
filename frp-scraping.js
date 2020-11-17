@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const sendEmail = require('./mailSender.js')
 
-var desiredGamePrice = 25;
+var desiredGamePrice = 40;
 
 function Game(args) {
     this.region = args.region

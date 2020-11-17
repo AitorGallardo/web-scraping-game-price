@@ -7,8 +7,11 @@ return new Promise((resolve,reject)=>{
 
   const title = args.title ? args.title : '🚀🚀🚀BUY SEKIRO🚀🚀🚀';
   const price = args.price ? args.price : '<Unknown>'
+  const name = args.name ? args.name : '<Unknown>'
   const link = args.link ? args.link : '<Unknown>'
-  const message = args.message ? args.message : `<p style="font-size:48px; font-weight: bold"> Price: ${price} € </p> </br>   ${link}`; 
+  const message = args.message ? args.message : `<p style="font-size:48px; font-weight: bold"> Price: ${price} € </p> </br>
+                                                 <p style="font-size:42px; font-style: italic;" > ${name} € </p>  </br> 
+                                                 ${link}`; 
 
   try {
     let transporter = nodemailer.createTransport({
