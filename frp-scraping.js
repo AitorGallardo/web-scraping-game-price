@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const sendEmail = require('./mailSender.js')
 
-var desiredGamePrice = 40;
+var desiredGamePrice = 25;
 
 function Game(args) {
     this.region = args.region
@@ -68,9 +68,16 @@ async function scrapeCDKEYBAY(){
         const cheapestGame = getCheapestGame(desiredGames)
 
         console.log('CKEYBAY-PRICE', cheapestGame, '\n');
+
+        // CDKEYBAY links are actually links to their api that has their scraping info, thats way we have to fetch it already to get the real url to the seller webpage
+        const {link} = JSON.parse((await webRequest(cheapestGame.link)));
+        console.log('LILNK', link);
+        cheapestGame.link = link;
+
         const end = new Date() - start
         console.log('CDKEYBAYEnds....   Time: ',end, '\n');
         return cheapestGame;
+        
     }catch(err){
         console.log('CKEYBAY-ERROR',err);
     }
@@ -123,7 +130,7 @@ function getInstantGamingElementsData($, div_search_children){
 
 function cleanWebData(rawDAta){
     const stringArray = rawDAta.split(' = ')[1]
-    const array =[]
+    const array = []
     JSON.parse(stringArray).map(res=>{
         const obj = {price:res.price_eur,
             region:res.zone,
