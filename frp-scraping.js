@@ -5,40 +5,67 @@ const axios = require('axios')
 
 
 
-function ElementData(args) {
+function Game(args) {
     this.region = args.region
-    this.price = args.price
+    this.price = parseFloat(args.price); 
     this.platform = args.platform
     this.link = args.name
     this.name = args.name
 }
 
+async function main(){
+    try{
+        const start = new Date();
+        const instantGamingGame = await scrapeInstantGaming()
+        const cdkeybayGame = await scrapeCDKEYBAY()
+        const end = new Date() - start
+        const cheapestGame  =  instantGamingGame.price < cdkeybayGame.price ? instantGamingGame : cdkeybayGame
+        console.log(' --- CHEAPEST_GAME ---','\n',cheapestGame, '\n', ' ---------------------', '\n');
+        console.log('TOTAL_TIME: ',end, '\n');
+
+    }catch(err){
+        console.log('MAIN ERROR > ', err);
+    }
+}
+
 async function scrapeInstantGaming(){
     try{
+        const start = new Date();
+        console.log('InstantGamingStarts....\n');
         const url = 'https://www.instant-gaming.com/en/search/?query=sekiro'
         const html = await webRequest(url);
         const $ = cheerio.load(html);
         const div_search_children = getInstantGamingDomTree($);
-        const elementsData = getInstantGamingElementsData($, div_search_children);
-        console.log(elementsData);
+        const allGames = getInstantGamingElementsData($, div_search_children);
+        const desiredGames = filterDesiredGames(allGames)
+        const cheapestGame = getCheapestGame(desiredGames)
+        console.log('INSTANT-PRICE', cheapestGame, '\n');
+        const end = new Date() - start
+        console.log('InstantGamingEnds....   Time: ',end, '\n');
+        return cheapestGame;
     }catch(err){
-        console.log('WASAP',err);
+        console.log('INSTANT-GAMING-SCRAPE-ERROR',err, '\n');
     }
     
 }
 async function scrapeCDKEYBAY(){
     try{
+        const start = new Date();
+        console.log('CDKEYBAYStarts....\n');
         const url = 'https://www.cdkeybay.com/search/sekiro-shadows-die-twice'
         const html = await webRequest(url);
         const $ = cheerio.load(html);
         const rawDAta = getInstantCDKEYBAYTree($);
         const allGames = cleanWebData(rawDAta);
-        const cheapestGame = getCheapestGame(allGames)
+        const desiredGames = filterDesiredGames(allGames)
+        const cheapestGame = getCheapestGame(desiredGames)
 
-        console.log('CHEAPESTGAME', cheapestGame);
-
+        console.log('CKEYBAY-PRICE', cheapestGame, '\n');
+        const end = new Date() - start
+        console.log('CDKEYBAYEnds....   Time: ',end, '\n');
+        return cheapestGame;
     }catch(err){
-        console.log('WASAP',err);
+        console.log('CKEYBAY-ERROR',err);
     }
     
 }
@@ -55,6 +82,9 @@ async function webRequest(url) {
 
 function getInstantCDKEYBAYTree($){
     return $('main[id="m"]').children().first().html();
+}
+function getInstantGamingDomTree($){
+    return $('div[class="search"]').children();
 }
 
 function getInstantGamingElementsData($, div_search_children){
@@ -79,24 +109,40 @@ function getInstantGamingElementsData($, div_search_children){
                 obj['name'] = name;
             }
         })
-        elementsData.push(new ElementData(obj))
+        elementsData.push(new Game(obj))
     })
     return elementsData;
 }
 
 function cleanWebData(rawDAta){
     const stringArray = rawDAta.split(' = ')[1]
-    return JSON.parse(stringArray)
+    const array =[]
+    JSON.parse(stringArray).map(res=>{
+        const obj = {price:res.price_eur,
+            region:res.zone,
+            platform:res.platform,
+            link:res.link,
+            name:res.name
+        }
+        array.push(new Game(obj))
+    })
+    return array;
 }
-function getCheapestGame(allGames){
+function getCheapestGame(filteredGame){
+    return filteredGame.sort((a,b)=>a-b)[0];
+}
+function filterDesiredGames(allGames){
     const checkPlatformAndZone = (args)=> {
-        const platformValidation = args.platform.toLowerCase().includes('steam');
-        const zoneValidation = args.zone.toLowerCase().includes('europe') || args.zone.toLowerCase().includes('global');
+
+        const platform = args.platform;
+        const region = args.region;
+
+        const platformValidation = platform.toLowerCase().includes('steam');
+        const zoneValidation = region.toLowerCase().includes('europe') || region.toLowerCase().includes('global')|| region.toLowerCase().includes('worlwide');
 
         return platformValidation&&zoneValidation;
     }
-    const filteredGame = allGames.filter(checkPlatformAndZone);
-    return filteredGame.sort((a, b) => a.price - b.price)[0];
+    return allGames.filter(checkPlatformAndZone);
 }
 
-scrapeCDKEYBAY()
+main()
