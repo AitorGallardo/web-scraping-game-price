@@ -4,7 +4,7 @@ const axios = require('axios')
 
 const sendEmail = require('./mailSender.js')
 
-var desiredGamePrice = 38.9;
+var desiredGamePrice = 25;
 
 function Game(args) {
     this.region = args.region
@@ -15,6 +15,7 @@ function Game(args) {
 }
 
 async function main(){
+    
     try{
         const start = new Date();
         const instantGamingGame = await scrapeInstantGaming()
@@ -23,7 +24,7 @@ async function main(){
         const cheapestGame  =  instantGamingGame.price < cdkeybayGame.price ? instantGamingGame : cdkeybayGame
         console.log(' --- CHEAPEST_GAME ---','\n',cheapestGame, '\n', ' ---------------------', '\n');
         console.log('---------> Sending email...');
-        if(cheapestGame<=desiredGamePrice){
+        if(cheapestGame.price<=desiredGamePrice){
             await sendEmail(cheapestGame)
         }else{
             await sendEmail({ title: '💩SEKIRO💩',...cheapestGame})
