@@ -1,6 +1,6 @@
 const cheerio = require('cheerio')
 const fetch = require('node-fetch')
-const axios = require('axios')
+
 
 const sendEmail = require('./mailSender.js')
 
