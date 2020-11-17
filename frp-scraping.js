@@ -18,10 +18,11 @@ async function main(){
     
     try{
         const start = new Date();
-        const instantGamingGame = await scrapeInstantGaming()
-        const cdkeybayGame = await scrapeCDKEYBAY()
+        const instantGamingGamePromise =  scrapeInstantGaming()
+        const cdkeybayGamePromise =  scrapeCDKEYBAY()
+        const [instantGamingGame,cdkeybayGame] = await Promise.all([ instantGamingGamePromise,cdkeybayGamePromise])
         const end = new Date() - start
-        const cheapestGame  =  instantGamingGame.price < cdkeybayGame.price ? instantGamingGame : cdkeybayGame
+        const cheapestGame  =  instantGamingGame.price < cdkeybayGame.price ? instantGamingGame :cdkeybayGame
         console.log(' --- CHEAPEST_GAME ---','\n',cheapestGame, '\n', ' ---------------------', '\n');
         console.log('---------> Sending email...');
         if(cheapestGame.price<=desiredGamePrice){
