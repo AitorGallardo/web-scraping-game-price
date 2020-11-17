@@ -10,7 +10,7 @@ function Game(args) {
     this.region = args.region
     this.price = parseFloat(args.price); 
     this.platform = args.platform
-    this.link = args.name
+    this.link = args.link
     this.name = args.name
 }
 
@@ -25,11 +25,9 @@ async function main(){
         const cheapestGame  =  instantGamingGame.price < cdkeybayGame.price ? instantGamingGame :cdkeybayGame
         console.log(' --- CHEAPEST_GAME ---','\n',cheapestGame, '\n', ' ---------------------', '\n');
         console.log('---------> Sending email...');
-        if(cheapestGame.price<=desiredGamePrice){
-            await sendEmail(cheapestGame)
-        }else{
-            await sendEmail({ title: '💩SEKIRO💩',...cheapestGame})
-        }
+
+        const mailTitle = cheapestGame.price <= desiredGamePrice ? '🚀🚀🚀BUY SEKIRO🚀🚀🚀' : '💩SEKIRO💩'
+        await sendEmail({ title: mailTitle,...cheapestGame})
         console.log('TOTAL_TIME: ',end, '\n');
 
     }catch(err){
