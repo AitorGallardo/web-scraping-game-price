@@ -2,8 +2,9 @@ const cheerio = require('cheerio')
 const fetch = require('node-fetch')
 const axios = require('axios')
 
+const sendEmail = require('./mailSender.js')
 
-
+var desiredGamePrice = 38.9;
 
 function Game(args) {
     this.region = args.region
@@ -21,6 +22,12 @@ async function main(){
         const end = new Date() - start
         const cheapestGame  =  instantGamingGame.price < cdkeybayGame.price ? instantGamingGame : cdkeybayGame
         console.log(' --- CHEAPEST_GAME ---','\n',cheapestGame, '\n', ' ---------------------', '\n');
+        console.log('---------> Sending email...');
+        if(cheapestGame<=desiredGamePrice){
+            await sendEmail(cheapestGame)
+        }else{
+            await sendEmail({ title: '💩SEKIRO💩',...cheapestGame})
+        }
         console.log('TOTAL_TIME: ',end, '\n');
 
     }catch(err){
@@ -146,3 +153,4 @@ function filterDesiredGames(allGames){
 }
 
 main()
+
