@@ -20,14 +20,18 @@ async function main(){
         const start = new Date();
         const instantGamingGamePromise =  scrapeInstantGaming()
         const cdkeybayGamePromise =  scrapeCDKEYBAY()
+
         const [instantGamingGame,cdkeybayGame] = await Promise.all([ instantGamingGamePromise,cdkeybayGamePromise])
+
         const end = new Date() - start
+
         const cheapestGame  =  instantGamingGame.price < cdkeybayGame.price ? instantGamingGame :cdkeybayGame
         console.log(' --- CHEAPEST_GAME ---','\n',cheapestGame, '\n', ' ---------------------', '\n');
         console.log('---------> Sending email...');
 
         const mailTitle = cheapestGame.price <= desiredGamePrice ? '🚀🚀🚀BUY SEKIRO🚀🚀🚀' : '💩SEKIRO💩'
         await sendEmail({ title: mailTitle,...cheapestGame})
+
         console.log('TOTAL_TIME: ',end, '\n');
 
     }catch(err){
@@ -39,6 +43,7 @@ async function scrapeInstantGaming(){
     try{
         const start = new Date();
         console.log('InstantGamingStarts....\n');
+
         const url = 'https://www.instant-gaming.com/en/search/?query=sekiro'
         const html = await webRequest(url);
         const $ = cheerio.load(html);
@@ -46,9 +51,11 @@ async function scrapeInstantGaming(){
         const allGames = getInstantGamingElementsData($, div_search_children);
         const desiredGames = filterDesiredGames(allGames)
         const cheapestGame = getCheapestGame(desiredGames)
+
         console.log('INSTANT-PRICE', cheapestGame, '\n');
         const end = new Date() - start
         console.log('InstantGamingEnds....   Time: ',end, '\n');
+
         return cheapestGame;
     }catch(err){
         console.log('INSTANT-GAMING-SCRAPE-ERROR',err, '\n');
@@ -59,6 +66,7 @@ async function scrapeCDKEYBAY(){
     try{
         const start = new Date();
         console.log('CDKEYBAYStarts....\n');
+
         const url = 'https://www.cdkeybay.com/search/sekiro-shadows-die-twice'
         const html = await webRequest(url);
         const $ = cheerio.load(html);
@@ -69,13 +77,13 @@ async function scrapeCDKEYBAY(){
 
         console.log('CKEYBAY-PRICE', cheapestGame, '\n');
 
-        // CDKEYBAY links are actually links to their api that has their scraping info, thats way we have to fetch it already to get the real url to the seller webpage
+        // CDKEYBAY links are actually links to their api that has their scraping info, thats way it has to be fetched already to get the real url from the seller webpage
         const {link} = JSON.parse((await webRequest(cheapestGame.link)));
-        console.log('LILNK', link);
         cheapestGame.link = link;
 
         const end = new Date() - start
         console.log('CDKEYBAYEnds....   Time: ',end, '\n');
+
         return cheapestGame;
         
     }catch(err){
@@ -102,7 +110,9 @@ function getInstantGamingDomTree($){
 }
 
 function getInstantGamingElementsData($, div_search_children){
+    
     const elementsData = [];
+
     div_search_children.map((i, el) => {
         const obj = {
             region: $(el).attr('data-region'),
@@ -129,9 +139,12 @@ function getInstantGamingElementsData($, div_search_children){
 }
 
 function cleanWebData(rawDAta){
+    
     const stringArray = rawDAta.split(' = ')[1]
     const array = []
+
     JSON.parse(stringArray).map(res=>{
+        
         const obj = {price:res.price_eur,
             region:res.zone,
             platform:res.platform,
