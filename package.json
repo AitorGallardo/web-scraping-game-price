@@ -5,8 +5,6 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dynamic": "node drp-scraping.js",
-    "static": "node frp-scraping.js"
   },
   "keywords": [],
   "author": "",
@@ -15,7 +13,6 @@
     "cheerio": "^1.0.0-rc.3",
     "dotenv": "^8.2.0",
     "node-fetch": "^2.6.1",
-    "nodemailer": "^6.4.15",
-    "puppeteer": "^5.4.1"
+    "nodemailer": "^6.4.15"
   }
 }
